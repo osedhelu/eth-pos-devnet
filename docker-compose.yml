@@ -37,6 +37,11 @@ services:
       - --verbosity=4
       - --mine
       - --miner.etherbase=${MINER_ACCOUNT1_CLEAN}
+      - --miner.threads=1
+      - --miner.gasprice=1
+      - --txpool.pricelimit=1
+      - --cache=1024
+      - --syncmode=full
 
   # Nodo 2 - Nodo secundario
   ethereum-node2:
