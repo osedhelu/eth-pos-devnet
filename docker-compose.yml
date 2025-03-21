@@ -91,9 +91,10 @@ services:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
 
   # Explorador de bloques BlockScout
   blockscout:
@@ -121,8 +122,8 @@ services:
       DISABLE_EXCHANGE_RATES: 'true'
       POOL_SIZE: '40'
       POOL_SIZE_API: '10'
-      HEART_BEAT_TIMEOUT: '30'
-      ENABLE_RUST_VERIFICATION_SERVICE: 'true'
+      HEART_BEAT_TIMEOUT: '60'
+      ENABLE_RUST_VERIFICATION_SERVICE: 'false'
       SHOW_MAINTENANCE_ALERT: 'false'
       DISABLE_WEBAPP: 'false'
       DISABLE_READ_API: 'false'
@@ -135,17 +136,15 @@ services:
       SUPPORTED_CHAINS: '[]'
       CACHE_BLOCK_COUNT_PERIOD: '7200'
       CACHE_TXS_PERIOD: '7200'
-      CACHE_ADDRESS_WITH_BALANCES_COUNT_PERIOD: '7200'
-      CACHE_TOTAL_GAS_USAGE_PERIOD: '7200'
-      CACHE_ADDRESS_COUNT_PERIOD: '7200'
-      CACHE_TOKEN_HOLDERS_COUNTER_PERIOD: '7200'
-      CACHE_TOKEN_TRANSFERS_COUNTER_PERIOD: '7200'
-      CACHE_ADDRESS_TRANSACTIONS_GAS_USAGE_COUNTER_PERIOD: '7200'
-      CACHE_TOKEN_EXCHANGE_RATE_PERIOD: '7200'
-      CACHE_AVERAGE_BLOCK_PERIOD: '7200'
-      CACHE_MARKET_HISTORY_PERIOD: '7200'
+      MIX_ENV: 'prod'
+      ETHEREUM_JSONRPC_DEBUG_TRACE_TRANSACTION_TIMEOUT: '20s'
+      ETHEREUM_JSONRPC_TRANSPORT: 'http'
+      INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: true
+      INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER: true
       DISABLE_BRIDGE_MARKET_CAP_UPDATER: 'true'
       DISABLE_KNOWN_TOKENS_UPDATER: 'true'
+      INDEXER_MEMORY_LIMIT: "4g"
+      FIRST_BLOCK: '0'
     ports:
       - "4000:4000"
     healthcheck:
@@ -153,7 +152,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 
 # Volúmenes persistentes
 volumes:
