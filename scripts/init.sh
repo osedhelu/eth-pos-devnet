@@ -12,12 +12,15 @@ if [ ! -d /eth/geth ]; then
     geth init --datadir /eth /eth/genesis.json
 fi
 
-# Importar la cuenta predefinida
+# Crear cuenta si no existe
 if [ ! -f /eth/keystore/* ]; then
-    echo "Configurando cuenta..."
-    echo "${NODE_PASS}" > /eth/password.txt
-    echo "${MINER_ACCOUNT2}" | sed 's/0x//' > /eth/key.txt
+    echo "Creando cuenta..."
+    geth account new --datadir /eth --password /eth/password.txt
 fi
+
+# Obtener la dirección de la cuenta
+ACCOUNT=$(geth account list --datadir /eth | head -n 1 | grep -o -E '0x[a-fA-F0-9]{40}')
+echo "Usando cuenta: $ACCOUNT"
 
 # Iniciar el nodo
 exec geth \
@@ -35,8 +38,7 @@ exec geth \
     --ws.origins "*" \
     --ws.api "eth,net,web3,personal,miner,admin,debug" \
     --mine \
-    --miner.etherbase ${MINER_ACCOUNT2} \
     --allow-insecure-unlock \
-    --unlock ${MINER_ACCOUNT2} \
+    --unlock $ACCOUNT \
     --password /eth/password.txt \
     --verbosity 3 
