@@ -1,6 +1,6 @@
 version: "3.8"
 
-# Red privada Ethereum con dos nodos
+# Red privada Ethereum con dos nodos y explorador de bloques
 services:
   # Nodo 1 - Nodo principal y minero
   ethereum-node1:
@@ -24,7 +24,7 @@ services:
       - --http.addr=0.0.0.0
       - --http.port=8545
       - --http.corsdomain=*
-      - --http.api=eth,net,web3,personal,miner,admin
+      - --http.api=eth,net,web3,personal,miner,admin,debug,txpool
       - --ws
       - --ws.addr=0.0.0.0
       - --ws.port=8546
@@ -58,7 +58,7 @@ services:
       - --http.addr=0.0.0.0
       - --http.port=8545
       - --http.corsdomain=*
-      - --http.api=eth,net,web3,personal,miner,admin
+      - --http.api=eth,net,web3,personal,miner,admin,debug,txpool
       - --ws
       - --ws.addr=0.0.0.0
       - --ws.port=8546
@@ -70,6 +70,48 @@ services:
       - --netrestrict=172.16.0.0/12
       - --verbosity=4
       - --bootnodes=enode://${MINER_ACCOUNT1_CLEAN}@ethereum-node1:30303
+
+  # Base de datos para BlockScout
+  postgres:
+    image: postgres:14
+    container_name: 'postgres'
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # Explorador de bloques BlockScout
+  blockscout:
+    image: blockscout/blockscout:latest
+    container_name: 'blockscout'
+    restart: always
+    depends_on:
+      - postgres
+      - ethereum-node1
+    environment:
+      ETHEREUM_JSONRPC_VARIANT: 'geth'
+      ETHEREUM_JSONRPC_HTTP_URL: 'http://ethereum-node1:8545'
+      ETHEREUM_JSONRPC_WS_URL: 'ws://ethereum-node1:8546'
+      ETHEREUM_JSONRPC_TRACE_URL: 'http://ethereum-node1:8545'
+      DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/blockscout?ssl=false'
+      ECTO_USE_SSL: 'false'
+      SECRET_KEY_BASE: '56NtB48ear7+wMSf0IQuWDAAazhpb31qyc7GiyspBP2vh7t5zlCsF5QDv76chXeN'
+      CHAIN_ID: '${NETWORK_ID}'
+      HEART_COMMAND: 'mix'
+      SUBNETWORK: '${CHAIN_NAME}'
+      COIN: 'ETH'
+      NETWORK: '${NETWORK_NAME}'
+    ports:
+      - "4000:4000"
+
+# Volúmenes persistentes
+volumes:
+  postgres-data:
 
 # Red para comunicación entre nodos
 networks:
