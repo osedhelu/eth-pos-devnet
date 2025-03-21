@@ -33,8 +33,11 @@ cat > genesis.json << EOL
     "constantinopleBlock": 0,
     "petersburgBlock": 0,
     "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
     "berlinBlock": 0,
     "londonBlock": 0,
+    "arrowGlacierBlock": 0,
+    "grayGlacierBlock": 0,
     "mergeForkBlock": 0,
     "terminalTotalDifficulty": 0,
     "terminalTotalDifficultyPassed": true,
@@ -45,7 +48,8 @@ cat > genesis.json << EOL
     }
   },
   "difficulty": "1",
-  "gasLimit": "8000000",
+  "gasLimit": "800000000",
+  "baseFeePerGas": "0x1",
   "extradata": "0x0000000000000000000000000000000000000000000000000000000000000000${MINER_ACCOUNT1_CLEAN}0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
   "alloc": {
     "${MINER_ACCOUNT1_CLEAN}": { "balance": "100000000000000000000" },
