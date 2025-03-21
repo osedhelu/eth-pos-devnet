@@ -1,0 +1,25 @@
+# Directorios de nodos Ethereum
+node1/
+node2/
+
+# Archivos de contraseña
+**/password.txt
+
+# Archivos de datos Ethereum
+**/geth/
+**/keystore/
+**/history
+
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno (opcional, comenta si quieres versionar el .env)
+# .env 

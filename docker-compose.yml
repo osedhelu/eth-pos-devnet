@@ -1,28 +1,78 @@
-version: '3.8'
+version: "3.8"
+
+# Red privada Ethereum con dos nodos
 services:
-  ethereum:
+  # Nodo 1 - Nodo principal y minero
+  ethereum-node1:
     image: ethereum/client-go:latest
-    container_name: geth-node
-    env_file: .env
+    container_name: geth-node1
     ports:
-      - "${NODE1_HTTP_PORT}:${NODE1_HTTP_PORT}"      # RPC
-      - "${NODE1_WS_PORT}:${NODE1_WS_PORT}"      # WebSocket
-      - "${NODE1_P2P_PORT}:${NODE1_P2P_PORT}"    # P2P
+      - "${NODE1_HTTP_PORT}:8545"  # Puerto RPC
+      - "${NODE1_WS_PORT}:8546"    # Puerto WebSocket
+      - "${NODE1_P2P_PORT}:30303"  # Puerto P2P
     volumes:
-      - ./ethereum:/root/.ethereum
+      - ./node1:/root/.ethereum
       - ./genesis.json:/root/genesis.json
+    environment:
+      - NETWORK_NAME=${NETWORK_NAME}
+      - CHAIN_NAME=${CHAIN_NAME}
+      - NODE_PASS=${NODE_PASS}
     command:
       - --datadir=/root/.ethereum
-      - --networkid=15678
+      - --networkid=${NETWORK_ID}
       - --http
       - --http.addr=0.0.0.0
-      - --http.port=${NODE1_HTTP_PORT}
-      - --http.corsdomain="*"
+      - --http.port=8545
+      - --http.corsdomain=*
       - --http.api=eth,net,web3,personal,miner,admin
       - --ws
       - --ws.addr=0.0.0.0
-      - --ws.port=${NODE1_WS_PORT}
-      - --ws.origins="*"
+      - --ws.port=8546
+      - --ws.origins=*
       - --mine
+      - --miner.etherbase=${MINER_ACCOUNT1}
+      - --unlock=${MINER_ACCOUNT1}
+      - --password=/root/.ethereum/password.txt
       - --allow-insecure-unlock
       - --nodiscover
+      - --verbosity=4
+
+  # Nodo 2 - Nodo secundario
+  ethereum-node2:
+    image: ethereum/client-go:latest
+    container_name: geth-node2
+    ports:
+      - "${NODE2_HTTP_PORT}:8545"
+      - "${NODE2_WS_PORT}:8546"
+      - "${NODE2_P2P_PORT}:30303"
+    volumes:
+      - ./node2:/root/.ethereum
+      - ./genesis.json:/root/genesis.json
+    environment:
+      - NETWORK_NAME=${NETWORK_NAME}
+      - CHAIN_NAME=${CHAIN_NAME}
+      - NODE_PASS=${NODE_PASS}
+    command:
+      - --datadir=/root/.ethereum
+      - --networkid=${NETWORK_ID}
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.port=8545
+      - --http.corsdomain=*
+      - --http.api=eth,net,web3,personal,miner,admin
+      - --ws
+      - --ws.addr=0.0.0.0
+      - --ws.port=8546
+      - --ws.origins=*
+      - --unlock=${MINER_ACCOUNT2}
+      - --password=/root/.ethereum/password.txt
+      - --allow-insecure-unlock
+      - --nodiscover
+      - --verbosity=4
+      # Conectar al nodo 1
+      - --bootnodes=enode://${MINER_ACCOUNT1}@ethereum-node1:30303
+
+# Red para comunicación entre nodos
+networks:
+  default:
+    name: ethereum-network
