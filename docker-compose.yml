@@ -1,20 +1,33 @@
-version: '3.8'
-
+version: "3.8"
 services:
-  eth-node:
-    build: .
-    container_name: eth-dev-node
-    environment:
-      - NODE_PASS=password123
+  ethereum:
+    image: ethereum/client-go:latest
+    container_name: geth-node
     ports:
-      - "8545:8545"
+      - "${NODE1_HTTP_PORT}:${NODE1_HTTP_PORT}" # RPC
+      - "${NODE1_WS_PORT}:${NODE1_WS_PORT}" # WebSocket
+      - "${NODE1_P2P_PORT}:${NODE1_P2P_PORT}" # P2P
     volumes:
-      - eth-data:/eth
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8545"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  eth-data:
+      - ./ethereum:/root/.ethereum
+      - ./genesis.json:/root/genesis.json
+    command:
+      - --datadir=/root/.ethereum
+      - --networkid=${NETWORK_ID}
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.port=${NODE1_HTTP_PORT}
+      - --http.corsdomain="*"
+      - --http.api=eth,net,web3,personal,miner,admin
+      - --ws
+      - --ws.addr=0.0.0.0
+      - --ws.port=${NODE1_WS_PORT}
+      - --ws.origins="*"
+      - --mine
+      - --miner.threads=${MINER_THREADS}
+      - --allow-insecure-unlock
+      - --nodiscover
+    environment:
+      - NETWORK_NAME=${NETWORK_NAME}
+      - CHAIN_NAME=${CHAIN_NAME}
+      - CURRENCY_SYMBOL=${CURRENCY_SYMBOL}
+      - NODE_PASS=${NODE_PASS}
