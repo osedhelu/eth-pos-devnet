@@ -35,6 +35,8 @@ services:
       - --nodiscover
       - --netrestrict=172.16.0.0/12
       - --verbosity=4
+      - --mine
+      - --miner.etherbase=${MINER_ACCOUNT1_CLEAN}
 
   # Nodo 2 - Nodo secundario
   ethereum-node2:
@@ -78,6 +80,7 @@ services:
     restart: always
     environment:
       POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
       POSTGRES_DB: blockscout
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
@@ -116,7 +119,6 @@ services:
       DISABLE_EXCHANGE_RATES: 'true'
       POOL_SIZE: '40'
       POOL_SIZE_API: '10'
-      ECTO_USE_SSL: 'false'
       HEART_BEAT_TIMEOUT: '30'
       ENABLE_RUST_VERIFICATION_SERVICE: 'true'
       SHOW_MAINTENANCE_ALERT: 'false'
