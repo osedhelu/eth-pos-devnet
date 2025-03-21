@@ -19,6 +19,12 @@ chmod 600 node1/password.txt node2/password.txt
 MINER_ACCOUNT1_CLEAN=$(echo "${MINER_ACCOUNT1#0x}" | tr '[:upper:]' '[:lower:]')
 MINER_ACCOUNT2_CLEAN=$(echo "${MINER_ACCOUNT2#0x}" | tr '[:upper:]' '[:lower:]')
 
+# Generar nodekey para el nodo 1
+echo "🔑 Generando nodekey para el nodo 1..."
+openssl rand -hex 32 > node1/nodekey
+ENODE_KEY=$(cat node1/nodekey)
+ENODE_ID=$(docker run --rm ethereum/client-go:latest bootnode -nodekeyhex $ENODE_KEY -writeaddress)
+
 # Crear el archivo genesis.json
 echo "⛓️  Generando archivo genesis.json..."
 cat > genesis.json << EOL
@@ -62,6 +68,9 @@ cat > genesis.json << EOL
 }
 EOL
 
+# Guardar el enode ID para el docker-compose
+echo "ENODE_ID=$ENODE_ID" >> .env
+
 # Verificar si docker está corriendo
 echo "🐳 Verificando estado de Docker..."
 if ! docker info > /dev/null 2>&1; then
@@ -85,6 +94,7 @@ echo "- Network ID: $NETWORK_ID"
 echo "- Chain Name: $CHAIN_NAME"
 echo "- Minero Principal: 0x$MINER_ACCOUNT1_CLEAN"
 echo "- Minero Secundario: 0x$MINER_ACCOUNT2_CLEAN"
+echo "- Enode ID: $ENODE_ID"
 echo "- HTTP Ports: $NODE1_HTTP_PORT, $NODE2_HTTP_PORT"
 echo ""
 echo "Para iniciar la red, ejecuta:"

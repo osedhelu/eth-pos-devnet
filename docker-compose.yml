@@ -75,7 +75,7 @@ services:
       - --nodiscover
       - --netrestrict=172.16.0.0/12
       - --verbosity=4
-      - --bootnodes=enode://${MINER_ACCOUNT1_CLEAN}@ethereum-node1:30303
+      - --bootnodes=enode://${ENODE_ID}@ethereum-node1:30303
 
   # Base de datos para BlockScout
   postgres:
