@@ -24,6 +24,5 @@ services:
       - --ws.port=${NODE1_WS_PORT}
       - --ws.origins="*"
       - --mine
-      - --miner.threads=1
       - --allow-insecure-unlock
       - --nodiscover
