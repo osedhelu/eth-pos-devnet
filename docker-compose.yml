@@ -8,9 +8,18 @@ services:
       --nodiscover
       --ipcdisable
       --networkid=${NETWORK_ID}
+      --http
+      --http.addr="0.0.0.0"
+      --http.port=8545
+      --http.api="eth,net,web3"
+      --http.corsdomain="*"
+      --http.vhosts="*"
+      --syncmode=full
     volumes:
       - ./genesis.json:/genesis.json
       - ./bootnode:/root/.ethereum
+    ports:
+      - "8545:8545"
     healthcheck:
       test: ["CMD", "geth", "attach", "http://localhost:8545", "--exec", "eth.blockNumber"]
       interval: 10s
@@ -29,14 +38,15 @@ services:
       --allow-insecure-unlock
       --http
       --http.addr="0.0.0.0"
-      --http.api="eth,web3,net,admin,personal"
+      --http.api="eth,web3,net,admin,personal,miner"
       --http.corsdomain="*"
       --http.vhosts="*"
       --ws
       --ws.addr="0.0.0.0"
-      --ws.api="eth,web3,net,admin,personal"
+      --ws.api="eth,web3,net,admin,personal,miner"
       --ws.origins="*"
       --networkid=${NETWORK_ID}
+      --syncmode=full
       --mine
       --miner.threads=${MINER_THREADS}
       --miner.etherbase=${MINER_ACCOUNT1}
@@ -72,14 +82,15 @@ services:
       --allow-insecure-unlock
       --http
       --http.addr="0.0.0.0"
-      --http.api="eth,web3,net,admin,personal"
+      --http.api="eth,web3,net,admin,personal,miner"
       --http.corsdomain="*"
       --http.vhosts="*"
       --ws
       --ws.addr="0.0.0.0"
-      --ws.api="eth,web3,net,admin,personal"
+      --ws.api="eth,web3,net,admin,personal,miner"
       --ws.origins="*"
       --networkid=${NETWORK_ID}
+      --syncmode=full
       --mine
       --miner.threads=${MINER_THREADS}
       --miner.etherbase=${MINER_ACCOUNT2}
