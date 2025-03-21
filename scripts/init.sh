@@ -9,14 +9,14 @@ echo "${NODE_PASS}" > /eth/password.txt
 # Inicializar con genesis si no está inicializado
 if [ ! -d /eth/geth ]; then
     echo "Inicializando blockchain..."
-    geth init --datadir /eth genesis.json
+    geth init --datadir /eth /eth/genesis.json
 fi
 
-# Importar la cuenta si no existe
+# Importar la cuenta predefinida
 if [ ! -f /eth/keystore/* ]; then
-    echo "Importando cuenta..."
-    echo "${MINER_ACCOUNT2}" > /eth/account.txt
-    geth account import --datadir /eth --password /eth/password.txt /eth/account.txt
+    echo "Configurando cuenta..."
+    echo "${NODE_PASS}" > /eth/password.txt
+    echo "${MINER_ACCOUNT2}" | sed 's/0x//' > /eth/key.txt
 fi
 
 # Iniciar el nodo
@@ -35,9 +35,8 @@ exec geth \
     --ws.origins "*" \
     --ws.api "eth,net,web3,personal,miner,admin,debug" \
     --mine \
-    --miner.threads ${MINER_THREADS} \
+    --miner.etherbase ${MINER_ACCOUNT2} \
     --allow-insecure-unlock \
     --unlock ${MINER_ACCOUNT2} \
     --password /eth/password.txt \
-    --syncmode full \
     --verbosity 3 
