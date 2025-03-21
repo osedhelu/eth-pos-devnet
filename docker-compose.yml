@@ -1,19 +1,19 @@
-version: "3.8"
+version: '3.8'
 services:
   ethereum:
     image: ethereum/client-go:latest
     container_name: geth-node
     env_file: .env
     ports:
-      - "${NODE1_HTTP_PORT}:${NODE1_HTTP_PORT}" # RPC
-      - "${NODE1_WS_PORT}:${NODE1_WS_PORT}" # WebSocket
-      - "${NODE1_P2P_PORT}:${NODE1_P2P_PORT}" # P2P
+      - "${NODE1_HTTP_PORT}:${NODE1_HTTP_PORT}"      # RPC
+      - "${NODE1_WS_PORT}:${NODE1_WS_PORT}"      # WebSocket
+      - "${NODE1_P2P_PORT}:${NODE1_P2P_PORT}"    # P2P
     volumes:
       - ./ethereum:/root/.ethereum
       - ./genesis.json:/root/genesis.json
     command:
       - --datadir=/root/.ethereum
-      - --networkid=${NETWORK_ID}
+      - --networkid=15678
       - --http
       - --http.addr=0.0.0.0
       - --http.port=${NODE1_HTTP_PORT}
@@ -24,11 +24,6 @@ services:
       - --ws.port=${NODE1_WS_PORT}
       - --ws.origins="*"
       - --mine
-      - --miner.threads=${MINER_THREADS}
+      - --miner.threads=1
       - --allow-insecure-unlock
       - --nodiscover
-    environment:
-      - NETWORK_NAME=${NETWORK_NAME}
-      - CHAIN_NAME=${CHAIN_NAME}
-      - CURRENCY_SYMBOL=${CURRENCY_SYMBOL}
-      - NODE_PASS=${NODE_PASS}
