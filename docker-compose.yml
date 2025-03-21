@@ -95,7 +95,7 @@ services:
 
   # Explorador de bloques BlockScout
   blockscout:
-    image: ghcr.io/blockscout/blockscout:latest
+    image: blockscout/blockscout:${DOCKER_TAG:-latest}
     container_name: 'blockscout'
     restart: always
     depends_on:
