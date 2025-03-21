@@ -1,7 +1,10 @@
 FROM ethereum/client-go:stable
 
 # Instalar herramientas necesarias
-RUN apk add --no-cache bash curl jq
+RUN apk update && apk add --no-cache \
+    bash \
+    curl \
+    jq
 
 # Crear directorio de trabajo
 WORKDIR /eth

@@ -4,13 +4,13 @@ services:
   eth-node:
     build: .
     container_name: eth-dev-node
+    env_file: .env
     environment:
-      - NETWORK_ID=1337
-      - ACCOUNT_PASSWORD=tu_contraseña_segura
+      - ACCOUNT_PASSWORD=${NODE_PASS}
     ports:
-      - "8545:8545"  # HTTP RPC
-      - "8546:8546"  # WS
-      - "30303:30303"  # P2P
+      - "${NODE1_HTTP_PORT}:8545"  # HTTP RPC
+      - "${NODE1_WS_PORT}:8546"    # WS
+      - "${NODE1_P2P_PORT}:30303"  # P2P
     volumes:
       - eth-data:/eth
     healthcheck:

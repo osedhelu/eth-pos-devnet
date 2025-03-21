@@ -1,23 +1,28 @@
 #!/bin/bash
 
-# Crear cuenta si no existe
-if [ ! -d /eth/keystore ]; then
-    echo "Creando nueva cuenta..."
-    echo "$ACCOUNT_PASSWORD" > /eth/password.txt
-    geth account new --datadir /eth --password /eth/password.txt
-    
-    # Obtener la dirección de la cuenta creada
-    ACCOUNT_ADDRESS=$(geth account list --datadir /eth | head -n 1 | grep -o -E '0x[a-fA-F0-9]{40}')
-    echo "Cuenta creada: $ACCOUNT_ADDRESS"
-    
-    # Inicializar con genesis
+# Crear directorio de datos si no existe
+mkdir -p /eth/keystore
+
+# Crear archivo de contraseña
+echo "${NODE_PASS}" > /eth/password.txt
+
+# Inicializar con genesis si no está inicializado
+if [ ! -d /eth/geth ]; then
+    echo "Inicializando blockchain..."
     geth init --datadir /eth genesis.json
+fi
+
+# Importar la cuenta si no existe
+if [ ! -f /eth/keystore/* ]; then
+    echo "Importando cuenta..."
+    echo "${MINER_ACCOUNT2}" > /eth/account.txt
+    geth account import --datadir /eth --password /eth/password.txt /eth/account.txt
 fi
 
 # Iniciar el nodo
 exec geth \
     --datadir /eth \
-    --networkid ${NETWORK_ID:-1337} \
+    --networkid ${NETWORK_ID} \
     --http \
     --http.addr "0.0.0.0" \
     --http.port 8545 \
@@ -30,9 +35,9 @@ exec geth \
     --ws.origins "*" \
     --ws.api "eth,net,web3,personal,miner,admin,debug" \
     --mine \
-    --miner.threads 1 \
+    --miner.threads ${MINER_THREADS} \
     --allow-insecure-unlock \
-    --unlock ${ACCOUNT_ADDRESS} \
+    --unlock ${MINER_ACCOUNT2} \
     --password /eth/password.txt \
     --syncmode full \
     --verbosity 3 
