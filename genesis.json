@@ -12,7 +12,7 @@
     "berlinBlock": 0,
     "londonBlock": 0,
     "mergeForkBlock": 0,
-    "terminalTotalDifficulty": 0,
+    "terminalTotalDifficulty": "0x0",
     "shanghaiTime": 0,
     "cancunTime": 0,
     "baseFeeDenominator": 8,
