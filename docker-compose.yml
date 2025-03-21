@@ -29,12 +29,11 @@ services:
       - --ws.addr=0.0.0.0
       - --ws.port=8546
       - --ws.origins=*
-      - --mine
-      - --miner.etherbase=${MINER_ACCOUNT1}
-      - --unlock=${MINER_ACCOUNT1}
+      - --unlock=${MINER_ACCOUNT1_CLEAN}
       - --password=/root/.ethereum/password.txt
       - --allow-insecure-unlock
       - --nodiscover
+      - --netrestrict=172.16.0.0/12
       - --verbosity=4
 
   # Nodo 2 - Nodo secundario
@@ -64,15 +63,18 @@ services:
       - --ws.addr=0.0.0.0
       - --ws.port=8546
       - --ws.origins=*
-      - --unlock=${MINER_ACCOUNT2}
+      - --unlock=${MINER_ACCOUNT2_CLEAN}
       - --password=/root/.ethereum/password.txt
       - --allow-insecure-unlock
       - --nodiscover
+      - --netrestrict=172.16.0.0/12
       - --verbosity=4
-      # Conectar al nodo 1
-      - --bootnodes=enode://${MINER_ACCOUNT1}@ethereum-node1:30303
+      - --bootnodes=enode://${MINER_ACCOUNT1_CLEAN}@ethereum-node1:30303
 
 # Red para comunicación entre nodos
 networks:
   default:
     name: ethereum-network
+    ipam:
+      config:
+        - subnet: 172.16.238.0/24

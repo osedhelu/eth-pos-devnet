@@ -35,6 +35,10 @@ cat > genesis.json << EOL
     "istanbulBlock": 0,
     "berlinBlock": 0,
     "londonBlock": 0,
+    "mergeForkBlock": 0,
+    "terminalTotalDifficulty": 0,
+    "terminalTotalDifficultyPassed": true,
+    "shanghaiTime": 0,
     "clique": {
       "period": 5,
       "epoch": 30000
@@ -46,7 +50,11 @@ cat > genesis.json << EOL
   "alloc": {
     "${MINER_ACCOUNT1_CLEAN}": { "balance": "100000000000000000000" },
     "${MINER_ACCOUNT2_CLEAN}": { "balance": "100000000000000000000" }
-  }
+  },
+  "nonce": "0x0000000000000042",
+  "timestamp": "0x0",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
 }
 EOL
 
