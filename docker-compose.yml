@@ -1,115 +1,23 @@
+version: '3.8'
+
 services:
-  geth-bootnode:
-    hostname: geth-bootnode
-    image: ethereum/client-go:stable
-    env_file: .env
-    command:
-      --nodekeyhex="b0ac22adcad37213c7c565810a50f1772291e7b0ce53fb73e7ec2a3c75bc13b5"
-      --nodiscover
-      --ipcdisable
-      --networkid=${NETWORK_ID}
-      --http
-      --http.addr="0.0.0.0"
-      --http.port=8545
-      --http.api="eth,net,web3"
-      --http.corsdomain="*"
-      --http.vhosts="*"
-      --syncmode=full
-    volumes:
-      - ./genesis.json:/genesis.json
-      - ./bootnode:/root/.ethereum
+  eth-node:
+    build: .
+    container_name: eth-dev-node
+    environment:
+      - NETWORK_ID=1337
+      - ACCOUNT_PASSWORD=tu_contraseña_segura
     ports:
-      - "8545:8545"
+      - "8545:8545"  # HTTP RPC
+      - "8546:8546"  # WS
+      - "30303:30303"  # P2P
+    volumes:
+      - eth-data:/eth
     healthcheck:
-      test: ["CMD", "geth", "attach", "http://localhost:8545", "--exec", "eth.blockNumber"]
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  geth-node1:
-    hostname: geth-node1
-    image: ethereum/client-go:stable
-    env_file: .env
-    depends_on:
-      geth-bootnode:
-        condition: service_healthy
-    command:
-      --bootnodes="enode://af22c29c316ad069cf48a09a4ad5cf04a251b411e45098888d114c6dd7f489a13786620d5953738762afa13711d4ffb3b19aa5de772d8af72f851f7e9c5b164a@geth-bootnode:30303"
-      --allow-insecure-unlock
-      --http
-      --http.addr="0.0.0.0"
-      --http.api="eth,web3,net,admin,personal,miner"
-      --http.corsdomain="*"
-      --http.vhosts="*"
-      --ws
-      --ws.addr="0.0.0.0"
-      --ws.api="eth,web3,net,admin,personal,miner"
-      --ws.origins="*"
-      --networkid=${NETWORK_ID}
-      --syncmode=full
-      --mine
-      --miner.threads=${MINER_THREADS}
-      --miner.etherbase=${MINER_ACCOUNT1}
-      --unlock=${MINER_ACCOUNT1}
-      --password=/root/password.txt
-      --metrics
-      --metrics.addr="0.0.0.0"
-      --metrics.port=6060
-    volumes:
-      - ./genesis.json:/genesis.json
-      - ./node1:/root/.ethereum
-      - ./node1/password.txt:/root/password.txt
-    ports:
-      - "${NODE1_HTTP_PORT}:8545"
-      - "${NODE1_WS_PORT}:8546"
-      - "${NODE1_P2P_PORT}:30303"
-      - "6060:6060"
-    healthcheck:
-      test: ["CMD", "geth", "attach", "http://localhost:8545", "--exec", "eth.blockNumber"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  geth-node2:
-    hostname: geth-node2
-    image: ethereum/client-go:stable
-    env_file: .env
-    depends_on:
-      geth-node1:
-        condition: service_healthy
-    command:
-      --bootnodes="enode://af22c29c316ad069cf48a09a4ad5cf04a251b411e45098888d114c6dd7f489a13786620d5953738762afa13711d4ffb3b19aa5de772d8af72f851f7e9c5b164a@geth-bootnode:30303"
-      --allow-insecure-unlock
-      --http
-      --http.addr="0.0.0.0"
-      --http.api="eth,web3,net,admin,personal,miner"
-      --http.corsdomain="*"
-      --http.vhosts="*"
-      --ws
-      --ws.addr="0.0.0.0"
-      --ws.api="eth,web3,net,admin,personal,miner"
-      --ws.origins="*"
-      --networkid=${NETWORK_ID}
-      --syncmode=full
-      --mine
-      --miner.threads=${MINER_THREADS}
-      --miner.etherbase=${MINER_ACCOUNT2}
-      --unlock=${MINER_ACCOUNT2}
-      --password=/root/password.txt
-      --metrics
-      --metrics.addr="0.0.0.0"
-      --metrics.port=6061
-    volumes:
-      - ./genesis.json:/genesis.json
-      - ./node2:/root/.ethereum
-      - ./node2/password.txt:/root/password.txt
-    ports:
-      - "${NODE2_HTTP_PORT}:8545"
-      - "${NODE2_WS_PORT}:8546"
-      - "${NODE2_P2P_PORT}:30303"
-      - "6061:6061"
-    healthcheck:
-      test: ["CMD", "geth", "attach", "http://localhost:8545", "--exec", "eth.blockNumber"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+volumes:
+  eth-data:
