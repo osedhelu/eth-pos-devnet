@@ -1,135 +1,104 @@
-version: "3.9"
 services:
-  # Creates a genesis state for the beacon chain using a YAML configuration file and
-  # a deterministic set of 64 validators.
-  create-beacon-chain-genesis:
-    image: "gcr.io/prysmaticlabs/prysm/cmd/prysmctl"
+  geth-bootnode:
+    hostname: geth-bootnode
+    image: ethereum/client-go:stable
+    env_file: .env
     command:
-      - testnet
-      - generate-genesis
-      - --fork=capella
-      - --num-validators=64
-      - --genesis-time-delay=15
-      - --output-ssz=/consensus/genesis.ssz
-      - --chain-config-file=/consensus/config.yml
-      - --geth-genesis-json-in=/execution/genesis.json
-      - --geth-genesis-json-out=/execution/genesis.json
+      --nodekeyhex="b0ac22adcad37213c7c565810a50f1772291e7b0ce53fb73e7ec2a3c75bc13b5"
+      --nodiscover
+      --ipcdisable
+      --networkid=${NETWORK_ID}
     volumes:
-      - ./consensus:/consensus
-      - ./execution:/execution
+      - ./genesis.json:/genesis.json
+      - ./bootnode:/root/.ethereum
+    healthcheck:
+      test: ["CMD", "geth", "attach", "http://localhost:8545", "--exec", "eth.blockNumber"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Removes the database of the go-ethereum execution client to ensure we start from a clean state.
-  # (geth has a `removedb` option, but it asks for a keyboard confirmation, so we use this instead)
-  geth-remove-db:
-    image: "alpine:3.19.0"
-    command: rm -rf /execution/geth
-    volumes:
-      - ./execution:/execution
-
-  # Sets up the genesis configuration for the go-ethereum client from a JSON file.
-  geth-genesis:
-    image: "ethereum/client-go:latest"
-    command: --datadir=/execution init /execution/genesis.json
-    volumes:
-      - ./execution:/execution
-      - ./execution/genesis.json:/execution/genesis.json
+  geth-node1:
+    hostname: geth-node1
+    image: ethereum/client-go:stable
+    env_file: .env
     depends_on:
-      create-beacon-chain-genesis:
-        condition: service_completed_successfully
-      geth-remove-db:
-        condition: service_completed_successfully
-
-  # Runs a Prysm beacon chain from a specified genesis state created in the previous step
-  # and connects to go-ethereum in the same network as the execution client.
-  # The account used in go-ethereum is set as the suggested fee recipient for transactions
-  # proposed via the validators attached to the beacon node.
-  beacon-chain:
-    image: "gcr.io/prysmaticlabs/prysm/beacon-chain:v4.1.1"
+      geth-bootnode:
+        condition: service_healthy
     command:
-      - --datadir=/consensus/beacondata
-      # No peers to sync with in this testnet, so setting to 0
-      - --min-sync-peers=0
-      - --genesis-state=/consensus/genesis.ssz
-      - --bootstrap-node=
-      - --interop-eth1data-votes
-      # The chain configuration file used for setting up Prysm
-      - --chain-config-file=/consensus/config.yml
-      # We specify the chain id used by our execution client
-      - --contract-deployment-block=0
-      - --chain-id=${CHAIN_ID:-32382}
-      - --rpc-host=0.0.0.0
-      - --grpc-gateway-host=0.0.0.0
-      - --execution-endpoint=http://geth:8551
-      - --accept-terms-of-use
-      - --jwt-secret=/execution/jwtsecret
-      - --suggested-fee-recipient=0x123463a4b065722e99115d6c222f267d9cabb524
-      - --minimum-peers-per-subnet=0
-      - --enable-debug-rpc-endpoints
-      - --force-clear-db
-    depends_on:
-      create-beacon-chain-genesis:
-        condition: service_completed_successfully
+      --bootnodes="enode://af22c29c316ad069cf48a09a4ad5cf04a251b411e45098888d114c6dd7f489a13786620d5953738762afa13711d4ffb3b19aa5de772d8af72f851f7e9c5b164a@geth-bootnode:30303"
+      --allow-insecure-unlock
+      --http
+      --http.addr="0.0.0.0"
+      --http.api="eth,web3,net,admin,personal"
+      --http.corsdomain="*"
+      --http.vhosts="*"
+      --ws
+      --ws.addr="0.0.0.0"
+      --ws.api="eth,web3,net,admin,personal"
+      --ws.origins="*"
+      --networkid=${NETWORK_ID}
+      --mine
+      --miner.threads=${MINER_THREADS}
+      --miner.etherbase=${MINER_ACCOUNT1}
+      --unlock=${MINER_ACCOUNT1}
+      --password=/root/password.txt
+      --metrics
+      --metrics.addr="0.0.0.0"
+      --metrics.port=6060
+    volumes:
+      - ./genesis.json:/genesis.json
+      - ./node1:/root/.ethereum
+      - ./node1/password.txt:/root/password.txt
     ports:
-      - 4000:4000
-      - 3500:3500
-      - 8080:8080
-      - 6060:6060
-      - 9090:9090
-    volumes:
-      - ./consensus:/consensus
-      - ./execution:/execution
-      - ./execution/jwtsecret:/execution/jwtsecret
+      - "${NODE1_HTTP_PORT}:8545"
+      - "${NODE1_WS_PORT}:8546"
+      - "${NODE1_P2P_PORT}:30303"
+      - "6060:6060"
+    healthcheck:
+      test: ["CMD", "geth", "attach", "http://localhost:8545", "--exec", "eth.blockNumber"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Runs the go-ethereum execution client with the specified, unlocked account and necessary
-  # APIs to allow for proof-of-stake consensus via Prysm.
-  geth:
-    image: "ethereum/client-go:latest"
+  geth-node2:
+    hostname: geth-node2
+    image: ethereum/client-go:stable
+    env_file: .env
+    depends_on:
+      geth-node1:
+        condition: service_healthy
     command:
-      - --http
-      - --http.api=eth,net,web3
-      - --http.addr=0.0.0.0
-      - --http.corsdomain=*
-      - --ws
-      - --ws.api=eth,net,web3
-      - --ws.addr=0.0.0.0
-      - --ws.origins=*
-      - --authrpc.vhosts=*
-      - --authrpc.addr=0.0.0.0
-      - --authrpc.jwtsecret=/execution/jwtsecret
-      - --datadir=/execution
-      - --allow-insecure-unlock
-      - --unlock=0x123463a4b065722e99115d6c222f267d9cabb524
-      - --password=/execution/geth_password.txt
-      - --nodiscover
-      - --syncmode=full
+      --bootnodes="enode://af22c29c316ad069cf48a09a4ad5cf04a251b411e45098888d114c6dd7f489a13786620d5953738762afa13711d4ffb3b19aa5de772d8af72f851f7e9c5b164a@geth-bootnode:30303"
+      --allow-insecure-unlock
+      --http
+      --http.addr="0.0.0.0"
+      --http.api="eth,web3,net,admin,personal"
+      --http.corsdomain="*"
+      --http.vhosts="*"
+      --ws
+      --ws.addr="0.0.0.0"
+      --ws.api="eth,web3,net,admin,personal"
+      --ws.origins="*"
+      --networkid=${NETWORK_ID}
+      --mine
+      --miner.threads=${MINER_THREADS}
+      --miner.etherbase=${MINER_ACCOUNT2}
+      --unlock=${MINER_ACCOUNT2}
+      --password=/root/password.txt
+      --metrics
+      --metrics.addr="0.0.0.0"
+      --metrics.port=6061
+    volumes:
+      - ./genesis.json:/genesis.json
+      - ./node2:/root/.ethereum
+      - ./node2/password.txt:/root/password.txt
     ports:
-      - 8551:8551
-      - 8545:8545
-      - 8546:8546
-    depends_on:
-      geth-genesis:
-        condition: service_completed_successfully
-      beacon-chain:
-        condition: service_started
-    volumes:
-      - ./execution:/execution
-      - ./execution/jwtsecret:/execution/jwtsecret
-      - ./execution/geth_password.txt:/execution/geth_password.txt
-
-  # We run a validator client with 64, deterministically-generated keys that match
-  # The validator keys present in the beacon chain genesis state generated a few steps above.
-  validator:
-    image: "gcr.io/prysmaticlabs/prysm/validator:v4.1.1"
-    command:
-      - --beacon-rpc-provider=beacon-chain:4000
-      - --datadir=/consensus/validatordata
-      - --accept-terms-of-use
-      - --interop-num-validators=64
-      - --interop-start-index=0
-      - --chain-config-file=/consensus/config.yml
-      - --force-clear-db
-    depends_on:
-      beacon-chain:
-        condition: service_started
-    volumes:
-      - ./consensus:/consensus
+      - "${NODE2_HTTP_PORT}:8545"
+      - "${NODE2_WS_PORT}:8546"
+      - "${NODE2_P2P_PORT}:30303"
+      - "6061:6061"
+    healthcheck:
+      test: ["CMD", "geth", "attach", "http://localhost:8545", "--exec", "eth.blockNumber"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
