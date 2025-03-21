@@ -3,6 +3,7 @@ services:
   ethereum:
     image: ethereum/client-go:latest
     container_name: geth-node
+    env_file: .env
     ports:
       - "${NODE1_HTTP_PORT}:${NODE1_HTTP_PORT}" # RPC
       - "${NODE1_WS_PORT}:${NODE1_WS_PORT}" # WebSocket
