@@ -78,21 +78,26 @@ services:
     restart: always
     environment:
       POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
+      POSTGRES_DB: blockscout
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Explorador de bloques BlockScout
   blockscout:
-    image: blockscout/blockscout:latest
+    image: ghcr.io/blockscout/blockscout:latest
     container_name: 'blockscout'
     restart: always
     depends_on:
-      - postgres
-      - ethereum-node1
+      postgres:
+        condition: service_healthy
     environment:
       ETHEREUM_JSONRPC_VARIANT: 'geth'
       ETHEREUM_JSONRPC_HTTP_URL: 'http://ethereum-node1:8545'
@@ -106,8 +111,45 @@ services:
       SUBNETWORK: '${CHAIN_NAME}'
       COIN: 'ETH'
       NETWORK: '${NETWORK_NAME}'
+      BLOCKSCOUT_HOST: 'localhost'
+      PORT: '4000'
+      DISABLE_EXCHANGE_RATES: 'true'
+      POOL_SIZE: '40'
+      POOL_SIZE_API: '10'
+      ECTO_USE_SSL: 'false'
+      HEART_BEAT_TIMEOUT: '30'
+      ENABLE_RUST_VERIFICATION_SERVICE: 'true'
+      SHOW_MAINTENANCE_ALERT: 'false'
+      DISABLE_WEBAPP: 'false'
+      DISABLE_READ_API: 'false'
+      CACHE_ENABLE: 'true'
+      CACHE_BLOCKS_COUNT: '100'
+      CACHE_TXS_COUNT: '100'
+      CACHE_ADDRESS_COUNT: '100'
+      CACHE_ADDRESS_WITH_BALANCES_UPDATE_INTERVAL: '60'
+      LINK_TO_OTHER_EXPLORERS: 'false'
+      SUPPORTED_CHAINS: '[]'
+      CACHE_BLOCK_COUNT_PERIOD: '7200'
+      CACHE_TXS_PERIOD: '7200'
+      CACHE_ADDRESS_WITH_BALANCES_COUNT_PERIOD: '7200'
+      CACHE_TOTAL_GAS_USAGE_PERIOD: '7200'
+      CACHE_ADDRESS_COUNT_PERIOD: '7200'
+      CACHE_TOKEN_HOLDERS_COUNTER_PERIOD: '7200'
+      CACHE_TOKEN_TRANSFERS_COUNTER_PERIOD: '7200'
+      CACHE_ADDRESS_TRANSACTIONS_GAS_USAGE_COUNTER_PERIOD: '7200'
+      CACHE_TOKEN_EXCHANGE_RATE_PERIOD: '7200'
+      CACHE_AVERAGE_BLOCK_PERIOD: '7200'
+      CACHE_MARKET_HISTORY_PERIOD: '7200'
+      DISABLE_BRIDGE_MARKET_CAP_UPDATER: 'true'
+      DISABLE_KNOWN_TOKENS_UPDATER: 'true'
     ports:
       - "4000:4000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 # Volúmenes persistentes
 volumes:
